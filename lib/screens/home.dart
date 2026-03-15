@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'my_medication_screen.dart'; // 방금 만든 마이약장 화면
+import 'my_medication.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -9,16 +9,16 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // 현재 선택된 탭 번호를 기억하는 변수 (0: 홈, 1: 마이약장 ...)
+  // [상태 변수] 현재 선택된 탭 인덱스
   int _currentIndex = 0;
 
-  // 알맹이 화면들 리스트
+  // [화면 목록] 탭 번호에 매칭되는 위젯 리스트
   final List<Widget> _pages = [
-    const HomeContent(),        // 0번: 홈 화면 내용
-    const MyMedicationScreen(), // 1번: 마이약장 화면 내용
-    const Center(child: Text('카메라 화면')), // 2번 (가운데 버튼용, 실제론 모달 띄울 예정)
-    const Center(child: Text('AI 상담 준비중')), // 3번
-    const Center(child: Text('내정보 준비중')),  // 4번
+    const HomeContent(),        // 0: 홈
+    const MyMedicationScreen(), // 1: 마이약장
+    const Center(child: Text('카메라 화면')), // 2: 카메라 (플로팅 버튼용 여백)
+    const Center(child: Text('AI 상담 준비중')), // 3: AI 상담
+    const Center(child: Text('내정보 준비중')),  // 4: 내정보
   ];
 
   @override
@@ -26,10 +26,10 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       
-      // 알맹이 화면 (현재 선택된 탭 번호에 따라 화면이 샥샥 바뀜!)
+      // [메인 화면] 현재 탭에 맞는 화면 출력
       body: _pages[_currentIndex],
 
-      // 가운데 카메라 버튼 (항상 떠있음)
+      // [중앙 FAB] 카메라 버튼
       floatingActionButton: Transform.translate(
         offset: const Offset(0, 30),
         child: Container(
@@ -39,13 +39,20 @@ class _HomeScreenState extends State<HomeScreen> {
             shape: BoxShape.circle,
             color: Colors.white,
             boxShadow: [
-              BoxShadow(color: const Color(0xFF4285F4).withOpacity(0.3), blurRadius: 15, spreadRadius: 2, offset: const Offset(0, 4)),
+              BoxShadow(
+                color: const Color(0xFF4285F4).withOpacity(0.3), 
+                blurRadius: 15, 
+                spreadRadius: 2, 
+                offset: const Offset(0, 4),
+              ),
             ],
           ),
           child: Padding(
             padding: const EdgeInsets.all(6.0),
             child: FloatingActionButton(
-              onPressed: () {},
+              onPressed: () {
+                // TODO: 카메라 모달 또는 화면 전환 로직
+              },
               backgroundColor: const Color(0xFF4285F4),
               elevation: 0,
               shape: const CircleBorder(),
@@ -56,7 +63,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
 
-      // 하단 네비게이션 바
+      // [하단 네비게이션 바]
       bottomNavigationBar: BottomAppBar(
         shape: const CircularNotchedRectangle(),
         notchMargin: 8.0,
@@ -66,7 +73,7 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             _buildBottomNavItem(Icons.home, '홈', 0),
             _buildBottomNavItem(Icons.medication, '마이약장', 1),
-            const SizedBox(width: 40), // 가운데 카메라 공간
+            const SizedBox(width: 40), // 중앙 카메라 버튼용 여백
             _buildBottomNavItem(Icons.smart_toy, 'AI 상담', 3),
             _buildBottomNavItem(Icons.person, '내정보', 4),
           ],
@@ -75,15 +82,14 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // 하단 탭 아이콘 부품
+  // --- [UI 컴포넌트: 하단 네비게이션 아이템] ---
   Widget _buildBottomNavItem(IconData icon, String label, int index) {
-    // 현재 선택된 인덱스와 이 버튼의 인덱스가 같으면 활성화(파란색)!
     bool isActive = _currentIndex == index; 
 
     return GestureDetector(
       onTap: () {
         setState(() {
-          _currentIndex = index; // 탭을 누르면 알맹이 화면 번호를 바꿈!
+          _currentIndex = index;
         });
       },
       child: Column(
@@ -106,7 +112,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-// ==== [홈 화면의 알맹이 내용 (원래 있던 코드)] ====
+// ==========================================
+// [0번 탭: 홈 화면 본문]
+// ==========================================
 class HomeContent extends StatelessWidget {
   const HomeContent({super.key});
 
@@ -115,7 +123,7 @@ class HomeContent extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // 상단 헤더
+        // 1. 상단 사용자 인사말 헤더
         Container(
           width: double.infinity,
           padding: const EdgeInsets.only(top: 70, left: 20, right: 20, bottom: 30),
@@ -133,11 +141,15 @@ class HomeContent extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 25),
+        
+        // 2. 복약 스케줄 타이틀
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 20.0),
           child: Text('오늘의 복약 스케줄', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         ),
         const SizedBox(height: 15),
+        
+        // 3. 복약 스케줄 리스트
         Expanded(
           child: ListView(
             padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -152,13 +164,17 @@ class HomeContent extends StatelessWidget {
     );
   }
 
+  // --- [UI 컴포넌트: 메인 홈 복약 카드] ---
   Widget _buildSimplePillCard(String time, String name, String desc, bool isTaken, bool isMissed) {
     return Container(
       margin: const EdgeInsets.only(bottom: 15),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))],
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))
+        ],
+        // 누락된 약일 경우 좌측 적색 테두리 표시
         border: isMissed ? const Border(left: BorderSide(color: Color(0xFFE53935), width: 5)) : null,
       ),
       child: ListTile(

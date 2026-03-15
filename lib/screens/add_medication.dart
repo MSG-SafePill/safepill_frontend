@@ -8,34 +8,34 @@ class AddMedicationScreen extends StatefulWidget {
 }
 
 class _AddMedicationScreenState extends State<AddMedicationScreen> {
-  // 사용자가 선택하는 데이터를 저장할 변수들
-  bool isPrescription = true; // 처방약인지 영양제인지
-  Set<String> selectedTimes = {}; // 선택된 복용 시간들 (다중 선택)
-  int days = 30; // 처방/구매 일수
+  // [상태 변수]
+  bool isPrescription = true;
+  Set<String> selectedTimes = {};
+  int days = 30;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       
-      // 상단 뒤로가기 바
+      // [상단 앱바]
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context), // 닫고 돌아가기
+          onPressed: () => Navigator.pop(context),
         ),
         title: const Text('약품 직접 추가', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
       ),
 
-      // 메인 스크롤 화면
+      // [메인 입력 폼 영역]
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 1. 약품명 입력 섹션
+            // 1. 약품명 검색 입력창
             _buildSectionTitle('약품명 또는 성분명', isRequired: true),
             TextField(
               decoration: InputDecoration(
@@ -57,7 +57,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
             ),
             const SizedBox(height: 30),
 
-            // 2. 분류 섹션 (처방약 vs 영양제)
+            // 2. 약품 분류 선택 (처방약/일반약 vs 영양제)
             _buildSectionTitle('분류'),
             Row(
               children: [
@@ -68,7 +68,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
             ),
             const SizedBox(height: 30),
 
-            // 3. 복용 시간 섹션
+            // 3. 복용 시간 선택 (그리드 형태 다중 선택)
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -85,7 +85,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                 _buildTimeButton('🌙 저녁 식전'), _buildTimeButton('🌙 저녁 식후'),
                 _buildTimeButton('🛌 취침 전'),
               ].map((widget) => FractionallySizedBox(
-                widthFactor: 0.48, // 2열로 예쁘게 배치하기 위해 48%씩 차지
+                widthFactor: 0.48,
                 child: widget,
               )).toList(),
             ),
@@ -93,7 +93,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
             _buildTimeButton('시간 상관없이 필요 시 복용', isFullWidth: true),
             const SizedBox(height: 30),
 
-            // 4. 처방/구매 일수 조절 섹션
+            // 4. 복용 일수 카운터
             _buildSectionTitle('처방/구매 일수'),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
@@ -121,7 +121,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
         ),
       ),
 
-      // 5. 하단 고정 저장 버튼
+      // [하단 고정 버튼 영역]
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(20.0),
@@ -130,7 +130,6 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
             height: 55,
             child: ElevatedButton(
               onPressed: () {
-                // 추가 완료 후 창 닫기
                 Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(
@@ -146,7 +145,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
     );
   }
 
-  // --- UI 부품(Widget) 함수들 ---
+  // --- [UI 재사용 컴포넌트들] ---
 
   Widget _buildSectionTitle(String title, {bool isRequired = false}) {
     return Padding(
