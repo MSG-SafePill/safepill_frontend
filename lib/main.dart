@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'screens/landing.dart';
+// 1. 띄우고 싶은 화면의 파일을 import 합니다.
+import 'screens/landing.dart'; 
+import 'screens/home.dart';   
 
-// [앱 시작점]
 void main() {
   runApp(const MyApp());
 }
 
-// [최상위 앱 위젯]
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -14,17 +14,15 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'SafePill',
-      
-      // [전역 테마 설정] 앱 전체의 메인 컬러 및 디자인 시스템 적용
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF2A8DE5)),
         useMaterial3: true,
       ),
       
-      // [첫 화면 (진입점) 설정] 앱을 켜면 랜딩 화면이 뜨도록 지정
-      home: const LandingScreen(), 
+      // 👉 2. 앱을 켰을 때 처음 보일 화면(클래스명)을 적어줍니다!
+      home: const LandingScreen(), // 랜딩 화면으로 시작하고 싶을 때
+      // home: const HomeScreen(), // 홈 화면으로 시작하고 싶을 때
       
-      // 우측 상단의 거슬리는 'DEBUG' 띠 숨김
       debugShowCheckedModeBanner: false,
     );
   }
