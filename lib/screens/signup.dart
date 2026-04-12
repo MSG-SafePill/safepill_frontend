@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -10,29 +11,78 @@ class SignupScreen extends StatefulWidget {
 }
 
 class _SignupScreenState extends State<SignupScreen> {
-  // 1. 6가지 정보를 담을 빨대(Controller) 준비!
   final TextEditingController _idController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _birthController = TextEditingController();
   
-  // 성별은 오타 방지를 위해 선택형(Dropdown) 변수로 관리합니다.
   String _selectedGender = 'MALE'; 
+  
+  // 💡 [핵심 변수] 아이디 중복 확인을 통과했는지 기억하는 변수!
+  bool _isIdChecked = false; 
 
-  // 2. 백엔드로 회원가입 정보를 쏘는 함수!
+  @override
+  void initState() {
+    super.initState();
+    // 유저가 중복 확인 후 아이디를 또 수정하면, 다시 중복 확인을 하도록 상태를 초기화합니다!
+    _idController.addListener(() {
+      if (_isIdChecked) {
+        setState(() {
+          _isIdChecked = false;
+        });
+      }
+    });
+  }
+
+  // 👇 1. 백엔드에 아이디 중복을 물어보는 함수
+  Future<void> _checkDuplicateId() async {
+    final loginId = _idController.text.trim();
+    if (loginId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('아이디를 먼저 입력해주세요.')));
+      return;
+    }
+
+    final String baseUrl = kIsWeb ? 'http://localhost:8080' : 'http://10.0.2.2:8080';
+    final url = Uri.parse('$baseUrl/api/users/check-id?loginId=$loginId');
+
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        setState(() { _isIdChecked = true; }); // 통과!
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('✅ 사용 가능한 아이디입니다!'), backgroundColor: Colors.green),
+        );
+      } else {
+        setState(() { _isIdChecked = false; }); // 빠꾸!
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('❌ ${response.body}'), backgroundColor: Colors.red),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('서버 통신 에러가 발생했습니다.')));
+    }
+  }
+
+  // 👇 2. 진짜 회원가입 쏘는 함수
   Future<void> _signup() async {
-    // 빈칸 검사
-    if (_idController.text.isEmpty || _passwordController.text.isEmpty || 
-        _nameController.text.isEmpty || _emailController.text.isEmpty || 
-        _birthController.text.isEmpty) {
+    // [보안] 중복 확인 안 했으면 아예 서버로 안 보냄!
+    if (!_isIdChecked) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('모든 정보를 입력해주세요!')),
+        const SnackBar(content: Text('아이디 중복 확인을 진행해주세요!'), backgroundColor: Colors.orange),
       );
       return;
     }
 
-    final url = Uri.parse('http://10.0.2.2:8080/api/users/signup');
+    if (_idController.text.isEmpty || _passwordController.text.isEmpty || 
+        _nameController.text.isEmpty || _emailController.text.isEmpty || 
+        _birthController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('모든 정보를 입력해주세요!')));
+      return;
+    }
+
+    final String baseUrl = kIsWeb ? 'http://localhost:8080' : 'http://10.0.2.2:8080';
+    final url = Uri.parse('$baseUrl/api/users/signup');
 
     try {
       final response = await http.post(
@@ -43,33 +93,24 @@ class _SignupScreenState extends State<SignupScreen> {
           'password': _passwordController.text.trim(),
           'username': _nameController.text.trim(),
           'email': _emailController.text.trim(),
-          'gender': _selectedGender, // MALE 또는 FEMALE
-          'birthDate': _birthController.text.trim(), // 예: 1990-01-01
+          'gender': _selectedGender,
+          'birthDate': _birthController.text.trim(),
         }),
       );
 
       if (response.statusCode == 200) {
-        print("🎉 회원가입 성공!");
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-             const SnackBar(content: Text('회원가입 성공! 로그인해주세요.')),
-          );
-          // 3. 가입 성공 시, 이전 화면(로그인 화면)으로 부드럽게 돌아가기!
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('회원가입 성공! 로그인해주세요.')));
           Navigator.pop(context); 
         }
       } else {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-             SnackBar(content: Text('가입 실패: ${response.body}')),
-          );
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('가입 실패: ${response.body}')));
         }
       }
     } catch (e) {
-      print("🔥 에러 발생: $e");
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('서버와 연결할 수 없습니다.')),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('서버와 연결할 수 없습니다.')));
       }
     }
   }
@@ -103,9 +144,29 @@ class _SignupScreenState extends State<SignupScreen> {
               const Text('Create Account', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
               const SizedBox(height: 30),
 
-              // 입력 폼들 배치
-              _buildTextField('아이디 (loginId)', false, _idController),
+              // 💡 아이디 입력창 + 중복확인 버튼 나란히 배치!
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildTextField('아이디 (loginId)', false, _idController),
+                  ),
+                  const SizedBox(width: 10),
+                  ElevatedButton(
+                    onPressed: _checkDuplicateId,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _isIdChecked ? Colors.green : Colors.black,
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                    ),
+                    child: Text(
+                      _isIdChecked ? '확인 완료' : '중복 확인',
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
               const SizedBox(height: 15),
+              
               _buildTextField('비밀번호', true, _passwordController),
               const SizedBox(height: 15),
               _buildTextField('이름', false, _nameController),
@@ -115,7 +176,6 @@ class _SignupScreenState extends State<SignupScreen> {
               _buildTextField('생년월일 (YYYY-MM-DD)', false, _birthController),
               const SizedBox(height: 15),
 
-              // 성별 선택 드롭다운
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 15),
                 decoration: BoxDecoration(
@@ -131,21 +191,18 @@ class _SignupScreenState extends State<SignupScreen> {
                       DropdownMenuItem(value: 'FEMALE', child: Text('여성')),
                     ],
                     onChanged: (value) {
-                      setState(() {
-                        if (value != null) _selectedGender = value;
-                      });
+                      setState(() { if (value != null) _selectedGender = value; });
                     },
                   ),
                 ),
               ),
               const SizedBox(height: 40),
 
-              // 가입하기 버튼
               SizedBox(
                 width: double.infinity,
                 height: 55,
                 child: ElevatedButton(
-                  onPressed: _signup,
+                  onPressed: _signup, // 중복 확인 안 했으면 여기서 튕겨냅니다!
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2A8DE5),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
@@ -161,7 +218,6 @@ class _SignupScreenState extends State<SignupScreen> {
     );
   }
 
-  // 텍스트 필드 생성 위젯
   Widget _buildTextField(String hint, bool isPassword, TextEditingController controller) {
     return TextField(
       controller: controller,

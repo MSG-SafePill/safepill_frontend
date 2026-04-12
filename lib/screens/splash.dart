@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'dart:async'; // 타이머를 쓰기 위한 패키지
-import 'login.dart'; // 이동할 로그인 화면
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'home.dart';
+import 'landing.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -13,42 +14,67 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    // 마법의 코드: 화면이 켜지고 2초 뒤에 로그인 화면으로 스르륵 넘어갑니다!
-    Timer(const Duration(seconds: 3), () {
-      Navigator.pushReplacement( // pushReplacement는 뒤로 가기 버튼을 없애줍니다.
-        context,
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
-      );
-    });
+    _checkAutoLogin(); // 앱이 켜지자마자 바로 금고 확인 시작!
+  }
+
+  // 💡 몰래 금고를 확인하는 마법의 함수!
+  Future<void> _checkAutoLogin() async {
+    // 1. 금고 소환
+    const storage = FlutterSecureStorage();
+
+    // 2. 금고에서 'jwt_token'이라는 이름표가 붙은 출입증 꺼내보기
+    String? token = await storage.read(key: 'jwt_token');
+
+    // (선택 사항) 로고를 보여주기 위해 1.5초 정도 일부러 기다려줍니다.
+    await Future.delayed(const Duration(milliseconds: 1500));
+
+    if (mounted) {
+      if (token != null) {
+        // 🎉 토큰 발견! 로그인 건너뛰고 바로 홈 화면으로 직행!
+        print("🔓 금고에서 토큰 발견! 자동 로그인 성공!");
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+        );
+      } else {
+        // ❌ 토큰 없음! 처음 왔거나 로그아웃한 유저. 랜딩 화면으로!
+        print("🔒 토큰 없음. 랜딩 화면으로 이동.");
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const LandingScreen()),
+        );
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // 랜딩 화면과 비슷한 예쁜 그라데이션 배경
       body: Container(
         width: double.infinity,
-        // 두 번째 사진 느낌의 파란색~초록색 예쁜 그라데이션 배경
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF2A8DE5), Color(0xFF00E676)], 
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF1E88E5), Color(0xFF00BFA5)],
           ),
         ),
         child: const Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // 임시 로고 아이콘 (나중에 진짜 이미지로 바꾸면 됩니다)
-            Icon(Icons.medication, size: 80, color: Colors.white),
+            // 앱 로고 아이콘
+            Icon(Icons.medication, size: 100, color: Colors.white),
             SizedBox(height: 20),
+            // 앱 이름
             Text(
               'SafePill',
-              style: TextStyle(fontSize: 45, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 1.5),
-            ),
-            SizedBox(height: 10),
-            Text(
-              '안전한 복용의 시작',
-              style: TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.w500),
+              style: TextStyle(
+                fontSize: 40,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                letterSpacing: 1.5,
+              ),
             ),
           ],
         ),
